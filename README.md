@@ -333,7 +333,6 @@ aplay -D plughw:0,0 /usr/local/retrophone/dialtone.wav
 
 ## 🔬 Architecture Diagram (conceptual)
 
-```
 +--------------------------------------------------------------+
 |                     Retro Rotary SIP Phone                   |
 |--------------------------------------------------------------|
@@ -345,7 +344,6 @@ aplay -D plughw:0,0 /usr/local/retrophone/dialtone.wav
 |  ring_control.py (Bells)         -> GPIO Driver              |
 |  webapp.py (Flask UI)            -> SIP + Logs + Control     |
 +--------------------------------------------------------------+
-```
 
 ---
 
