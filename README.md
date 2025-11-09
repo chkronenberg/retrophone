@@ -190,6 +190,12 @@ pi ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart phone-daemon.service
 pi ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart retrophone-web.service
 ```
 
+Permission for the webapp to change usernames in the account-file
+```bash
+sudo chown -R pi:pi /etc/retrophone/baresip
+sudo chmod 640 /etc/retrophone/baresip/accounts
+```
+
 ---
 
 ### 8️⃣ Systemd Services
@@ -277,6 +283,25 @@ journalctl -u baresip -b --no-pager | tail -n 50
 
 ---
 
+### 📝 Configure logrotate
+
+```bash
+sudo tee /etc/logrotate.d/retrophone >/dev/null <<'EOF'
+/var/log/retrophone/*.log {
+    daily
+    rotate 14
+    compress
+    missingok
+    notifempty
+    create 0640 root root
+    sharedscripts
+    postrotate
+        systemctl kill -s HUP phone-daemon.service 2>/dev/null || true
+    endscript
+}
+EOF
+```
+
 ## 🖥️ Web Interface
 
 Accessible at:  
@@ -338,7 +363,8 @@ aplay -D plughw:0,0 /usr/local/retrophone/dialtone.wav
 |--------------------------------------------------------------|
 |  Rotary Dial  |  Hook Switch  |  Bell Coils  |  USB Audio    |
 |--------------------------------------------------------------|
-|    GPIO 23    |    GPIO 18    |  GPIO 17/27  | Logitech H340 Headset (disassembled)|
+|    GPIO 23    |    GPIO 18    |  GPIO 17/27  | Logitech H340 |
+|    GPIO 23    |    GPIO 18    |  GPIO 17/27  |    Headset    |
 |--------------------------------------------------------------|
 |  phone_daemon.py (Pulse/Hooks)  -> baresip (SIP stack)       |
 |  ring_control.py (Bells)         -> GPIO Driver              |
