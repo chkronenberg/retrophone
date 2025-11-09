@@ -364,7 +364,7 @@ aplay -D plughw:0,0 /usr/local/retrophone/dialtone.wav
 |  Rotary Dial  |  Hook Switch  |  Bell Coils  |  USB Audio    |
 |--------------------------------------------------------------|
 |    GPIO 23    |    GPIO 18    |  GPIO 17/27  | Logitech H340 |
-|    GPIO 23    |    GPIO 18    |  GPIO 17/27  |    Headset    |
+|               |               |              |    Headset    |
 |--------------------------------------------------------------|
 |  phone_daemon.py (Pulse/Hooks)  -> baresip (SIP stack)       |
 |  ring_control.py (Bells)         -> GPIO Driver              |
