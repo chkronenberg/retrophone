@@ -57,22 +57,17 @@ Enable SSH and network.
 ```bash
 sudo apt-get update
 sudo apt-get upgrade -y
-sudo apt-get install -y \  python3 python3-pip python3-flask python3-gpiozero python3-rpi.gpio \  alsa-utils sox ffmpeg git curl wget unzip nano vim sudo \  build-essential libasound2-dev libssl-dev libz-dev libopus-dev libavformat-dev \  libavcodec-dev libavutil-dev libre-dev libspandsp-dev libreadline-dev \  uuid-dev libedit-dev libmicrohttpd-dev systemd python3-venv
+sudo apt-get install -y \  python3 python3-pip python3-flask python3-gpiozero python3-rpi.gpio \  alsa-utils sox git \  build-essential libasound2-dev libssl-dev libz-dev libopus-dev libavformat-dev \  libavcodec-dev libavutil-dev libre-dev libspandsp-dev libreadline-dev \  uuid-dev libedit-dev libmicrohttpd-dev systemd python3-venv \ baresip libasound2
 ```
 
 ---
 
-### 3️⃣ Compile and Install **baresip**
+### 3️⃣ Create folders for **retrophone** and **baresip**
 
 ```bash
-cd /usr/src
-sudo git clone https://github.com/baresip/re.git
-sudo git clone https://github.com/baresip/rem.git
-sudo git clone https://github.com/baresip/baresip.git
-
-cd /usr/src/re && make && sudo make install
-cd /usr/src/rem && make && sudo make install
-cd /usr/src/baresip && make && sudo make install
+sudo mkdir -p /etc/retrophone/baresip
+sudo mkdir -p /usr/local/retrophone
+sudo mkdir -p /var/log/retrophone
 ```
 
 Run once to generate default config:
@@ -86,16 +81,73 @@ baresip
 
 ### 4️⃣ Configure baresip
 
-Edit `~/.baresip/config`:
+**Create the initial config-file for baresip**
+Edit `/etc/retrophone/baresip/config`:
 
-```text
-audio_player alsa,plughw:0,0
-audio_source alsa,plughw:0,0
-audio_alert  alsa,null
-audio_srate 48000
+```bash
+sudo tee /etc/retrophone/baresip/config >/dev/null <<'EOF'
+# UI Modules
+module                  stdio.so
+module                  httpd.so
 
-ring_aufile none
-ctrl_tcp_listen 0.0.0.0:4444
+# Audio driver Modules
+module                  alsa.so
+
+# Media NAT modules
+module                  stun.so
+module                  turn.so
+module                  ice.so
+
+#------------------------------------------------------------------------------
+# Temporary Modules (loaded then unloaded)
+
+module_tmp              uuid.so
+module_tmp              account.so
+
+
+#------------------------------------------------------------------------------
+# Application Modules
+
+module_app              auloop.so
+module_app              contact.so
+module_app              debug_cmd.so
+module_app              menu.so
+module_app              ctrl_tcp.so
+module_app              vidloop.so
+
+#------------------------------------------------------------------------------
+# Module parameters
+
+
+# UI Modules parameters
+cons_listen             0.0.0.0:5555 # cons - Console UI UDP/TCP sockets
+
+http_listen             127.0.0.1:8000 # httpd - HTTP Server
+
+ctrl_tcp_listen         127.0.0.1:4444 # ctrl_tcp - TCP interface JSON
+
+evdev_device            /dev/input/event0
+
+# Opus codec parameters
+opus_bitrate            28000 # 6000-510000
+
+vumeter_stderr          yes
+
+# Selfview
+video_selfview          window # {window,pip}
+
+# Menu
+ring_aufile             none
+EOF
+```
+
+**Create config file for the useraccount**
+Edit `/etc/retrophone/baresip/accounts`:
+```bash
+sudo tee /etc/retrophone/baresip/accounts >/dev/null <<'EOF'
+; YOUR ACCOUNT
+<sip:phonenumber@sip.domain.url>;auth_user=USERNAME;auth_pass=YOUR_PASSWORD;outbound="sip:sip.domain.url;transport=udp";regint=300
+EOF
 ```
 
 ---
@@ -143,7 +195,8 @@ pi ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart retrophone-web.service
 ### 8️⃣ Systemd Services
 
 #### 📞 `/etc/systemd/system/phone-daemon.service`
-```ini
+```bash
+sudo tee /etc/systemd/system/phone-daemon.service >/dev/null <<'EOF'
 [Unit]
 Description=RetroPhone Dial/Hook Daemon
 After=network.target sound.target baresip.service
@@ -157,10 +210,15 @@ NoNewPrivileges=false
 
 [Install]
 WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now phone-daemon.service
 ```
 
 #### 🔔 `/etc/systemd/system/retrophone-web.service`
-```ini
+```bash
+sudo tee /etc/systemd/system/retrophone-web.service >/dev/null <<'EOF'
 [Unit]
 Description=RetroPhone Web UI
 After=network.target
@@ -177,31 +235,45 @@ NoNewPrivileges=false
 
 [Install]
 WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now retrophone-web.service
 ```
 
 #### 📡 `/etc/systemd/system/baresip.service`
-```ini
+Edit `/etc/systemd/system/baresip.service`:
+
+```bash
+sudo tee /etc/systemd/system/baresip.service >/dev/null <<'EOF'
 [Unit]
-Description=Baresip SIP Client
-After=network.target sound.target
+Description=baresip SIP client
+After=network-online.target
+Wants=network-online.target
 
 [Service]
-User=pi
-ExecStart=/usr/local/bin/baresip -f /home/pi/.baresip
-Restart=on-failure
-NoNewPrivileges=false
+Type=simple
+ExecStart=/usr/bin/baresip -f /etc/retrophone/baresip
+Restart=always
+RestartSec=2
+# Root ist ok für GPIO-Setup und einfachen Start; alternativ eigenen User anlegen.
+User=root
 
 [Install]
 WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now baresip.service
 ```
 
-Enable & start:
+**check**
+You should see "registered" messages.
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable baresip phone-daemon retrophone-web
-sudo systemctl start  baresip phone-daemon retrophone-web
+journalctl -u baresip -b --no-pager | tail -n 50
 ```
+
 
 ---
 
@@ -224,8 +296,8 @@ Environment variables in `retrophone-web.service` control login credentials.
 
 | Path | Description |
 |------|--------------|
-| `/var/log/retrophone/phone.log` | Main rotary daemon (dial, hook, call states) |
-| `/var/log/retrophone/ring.log` | Bell control |
+| `tail -f /var/log/retrophone/phone.log` | Main rotary daemon (dial, hook, call states) |
+| `tail -f /var/log/retrophone/ring.log` | Bell control |
 | `journalctl -u baresip` | baresip SIP logs |
 
 ---
@@ -236,7 +308,7 @@ Environment variables in `retrophone-web.service` control login credentials.
 |---------|----------|
 | `gpio_monitor.py` | Realtime GPIO monitor for all pins |
 | `gpio_hook_monitor.py` | Shows only hook state |
-| `ring_control.py` | Manual ring test (`sudo /usr/local/retrophone/ring_control.py oneshot 2000`) |
+| `ring_control.py` | Manual ring test (`sudo /usr/local/retrophone/ring_control.py oneshot 1000`) |
 
 ---
 
@@ -267,7 +339,7 @@ aplay -D plughw:0,0 /usr/local/retrophone/dialtone.wav
 |--------------------------------------------------------------|
 |  Rotary Dial  |  Hook Switch  |  Bell Coils  |  USB Audio    |
 |--------------------------------------------------------------|
-|    GPIO 23    |    GPIO 18    |  GPIO 17/27  |  H340 Headset |
+|    GPIO 23    |    GPIO 18    |  GPIO 17/27  | Logitech H340 Headset (disassembled)|
 |--------------------------------------------------------------|
 |  phone_daemon.py (Pulse/Hooks)  -> baresip (SIP stack)       |
 |  ring_control.py (Bells)         -> GPIO Driver              |
