@@ -32,6 +32,11 @@ Built on **Raspberry Pi Zero 2 W** running **Debian Trixie**, **Baresip**, and *
 - 🧠 Flask-based web interface for SIP, logs & services  
 - 🔊 Dial-tone playback and full audio through USB headset  
 
+> 💬 **Need help or want to learn more about this project?**  
+> You can ask questions, get setup guidance or troubleshooting tips directly via the  
+> [**RetroPhone Custom GPT Assistant**](https://chatgpt.com/g/g-691247a8e5c0819190373fa77746ca60-retrophone).
+
+
 ---
 
 ## 🧩 Features
