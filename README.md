@@ -81,6 +81,18 @@ After some careful cleaning and rewiring, the phone found a new life as a fully 
 
 ---
 
+### 📈 Wiring Diagram
+
+Below is the complete wiring layout for the Retro Rotary SIP Phone hardware setup.  
+It shows the Raspberry Pi Zero 2 W GPIO connections, MOSFET bell driver, diodes, and power converters.
+
+![Retro Rotary Phone Wiring Diagram](media/20251110_wiring_diagram.png)
+
+> **Tip:** Open the image in full size to see all GPIO labels and wiring colors clearly.  
+> **Ensure you double-check the polarity of the 1N4007 diodes and the MOSFET inputs before powering on.**
+
+---
+
 ### 🔩 GPIO Mapping Summary
 
 | Signal | GPIO (BCM) | Description | Logic |
