@@ -1,5 +1,5 @@
 # ☎️ Retro Rotary SIP Phone  
-**Old Swiss Rotary Phone revived with Raspberry Pi Zero 2W, Debian Trixie, baresip, Python and real bells**
+**Convert a classic rotary phone into a working SIP VoIP phone using a Raspberry Pi Zero 2 W, Debian Trixie, baresip, Python 3 and real bells**
 
 [![Python 3](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![Raspberry Pi Zero 2 W](https://img.shields.io/badge/Hardware-Raspberry%20Pi%20Zero%202%20W-red.svg)](https://www.raspberrypi.com/)
@@ -354,6 +354,13 @@ This may cause random disconnects, lost SIP registration, or dropped Flask sessi
 
 To prevent this, **disable Wi-Fi power management** permanently:
 
+Check if power_save mode is deactivated:
+
+```bash
+iw wlan0 get power_save
+```
+
+If it is not deactivated (power_save on), deactiviate it with the following command:
 ```bash
 sudo iw dev wlan0 set power_save off
 ```
@@ -455,4 +462,12 @@ All third-party components retain their original licenses.
 
 ## ⭐ Support & Collaboration
 If you love vintage hardware and open-source telephony, give this project a ⭐ on GitHub or share your own build via pull request or issue!
+
+---
+
+## 🔎 Keywords for Discoverability
+Raspberry Pi rotary phone • retro VoIP project • Python baresip integration • 
+Raspberry Pi Zero 2 W telephony • GPIO pulse dialing • rotary dial SIP phone • 
+mechanical bell driver • Flask web UI • Debian Trixie Raspberry Pi project • 
+DIY retro hardware • vintage telephone restoration
 
