@@ -62,17 +62,18 @@ After some careful cleaning and rewiring, the phone found a new life as a fully 
 
 ### ⚙️ Required Components
 
-| Component | Description |
-|------------------|------------------|
+| Component | Description | Link to buy
+|------------------|------------------|------------------|
 | ☎️ Old-style rotary telephone | The prototype uses a PTT **Modell 29**, found in the family attic. Any similar pulse-dial model will work. |
 | 🥧 Raspberry Pi Zero 2W | Compact, low-power computer controlling GPIO and running the SIP stack. Any variant of the Zero 2 W will do. |
-| 🔌 Dual D4184 MOSFET module | Used as high-current switches to drive the twin mechanical bell coils directly from the Pi GPIO pins. |
+| 🔌 2x Dual D4184 MOSFET module | Used as high-current switches to drive the twin mechanical bell coils directly from the Pi GPIO pins. | 
 | ⚡ 2 × 1N4007 diodes (1A / 1000V) | Wired in reverse across the bell coil outputs from the D4184 MOSFETs. These protect the switches from the voltage spike generated when the magnetic field in the coils collapses. **Ensure the band faces the positive line!** |
 | 🔋 Power supply 12V → 35V | Boost converter used to power the mechanical bell coils. |
 | 🔋 Power supply 12V → 5V | Step-down converter used to power the Raspberry Pi. |
 | 🔌 12 V DC power adapter | Common supply feeding both converters above. |
 | 🧠 Raspberry Pi GPIO breakout board | For clean wiring and to mount all discrete components safely. |
-| 🎧 USB audio adapter | Provides microphone and speaker ports for handset audio. |
+| 🎧 USB audio adapter or old USB Headset | Provides microphone and speaker ports for handset audio. |
+| 🎧 Speaker and microphone | Provides microphone and speaker ports for handset audio. |
 | 🔗 Micro-USB “On-The-Go” (OTG) cable | Connects the USB audio interface to the Raspberry Pi Zero 2 W. |
 
 > The D4184 MOSFET module drives the two bell coils (RING_A and RING_B).  
@@ -239,4 +240,7 @@ Retro rotary phone Raspberry Pi • Raspberry Pi Zero 2 W SIP phone • baresip 
 ---
 
 ## ⭐ Support & Collaboration
-If you love vintage hardware and open-source telephony, give this project a ⭐ on GitHub or share your own build via pull request or issue!
+If you're a fan of vintage hardware and open-source telephony, give this project a star on GitHub or share your own build via a pull request or issue!
+And if you enjoyed this project or found it helpful in setting up your own retro phone, you can buy me a coffee to help keep the bells ringing and the code flowing. ☕👇  
+
+[![Buy Me a Coffee] (https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buymeacoffee&logoColor=black) (https://buymeacoffee.com/ckronenbere)
