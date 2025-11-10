@@ -101,7 +101,7 @@ It shows the Raspberry Pi Zero 2 W GPIO connections, MOSFET bell driver, diodes,
 | PULSE | 23 | Rotary dial pulses | 1 = pulse active |
 | POS1 | 24 | Dial return contact | 0 = dial turning |
 | RING_A | 17 | Bell coil A | controlled by `ring_control.py` |
-| RING_B | 27 | Bell coil B | optional, for dual-coil bells |
+| RING_B | 27 | Bell coil B | controlled by `ring_control.py` |
 
 > The original Swiss pulse-dial logic pulls to GND — no external pull-down resistors needed.
 
@@ -221,7 +221,7 @@ aplay -D plughw:0,0 /usr/local/retrophone/dialtone.wav
 ---
 
 ## 🧠 Credits & References
-- Inspired by [CrazyRobMiles / RaspberryPi-DialTelephone](https://github.com/CrazyRobMiles/RaspberryPi-DialTelephone)  
+- Electronics and wiring inspired by [CrazyRobMiles / RaspberryPi-DialTelephone](https://github.com/CrazyRobMiles/RaspberryPi-DialTelephone)  
 - VoIP engine [baresip](https://github.com/baresip/baresip)  
 - Community resources: [baresip Discussions](https://github.com/baresip/baresip/discussions) · [r/raspberry_pi](https://reddit.com/r/raspberry_pi)
 
