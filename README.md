@@ -161,13 +161,14 @@ aplay -D plughw:0,0 /usr/local/retrophone/dialtone.wav
 +--------------------------------------------------------------+
 |                     Retro Rotary SIP Phone                   |
 |--------------------------------------------------------------|
-| Rotary Dial | Hook Switch | Bell Coils | USB Audio |
+|  Rotary Dial  |  Hook Switch  |  Bell Coils  |  USB Audio    |
 |--------------------------------------------------------------|
-| GPIO 23    | GPIO 18     | GPIO 17/27 | USB Headset |
+|    GPIO 23    |    GPIO 18    |  GPIO 17/27  | Logitech H340 |
+|               |               |              |    Headset    |
 |--------------------------------------------------------------|
-| phone_daemon.py → baresip (SIP stack) |
-| ring_control.py → GPIO driver |
-| webapp.py (Flask UI) → SIP + Logs + Control |
+|  phone_daemon.py (Pulse/Hooks)  -> baresip (SIP stack)       |
+|  ring_control.py (Bells)         -> GPIO Driver              |
+|  webapp.py (Flask UI)            -> SIP + Logs + Control     |
 +--------------------------------------------------------------+
 ```
 
