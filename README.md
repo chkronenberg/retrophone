@@ -82,7 +82,8 @@ After some careful cleaning and rewiring, the phone found a new life as a fully 
 
 ---
 
-### 📈 Wiring Diagram
+### 📈 Architecture & Wiring Diagram
+
 
 Below is the complete wiring layout for the Retro Rotary SIP Phone hardware setup.  
 It shows the Raspberry Pi Zero 2 W GPIO connections, MOSFET bell driver, diodes, and power converters.
@@ -91,6 +92,21 @@ It shows the Raspberry Pi Zero 2 W GPIO connections, MOSFET bell driver, diodes,
 
 > **Tip:** Open the image in full size to see all GPIO labels and wiring colors clearly.  
 > **Ensure you double-check the polarity of the 1N4007 diodes and the MOSFET inputs before powering on.**
+
+```
++--------------------------------------------------------------+
+|                     Retro Rotary SIP Phone                   |
+|--------------------------------------------------------------|
+|  Rotary Dial  |  Hook Switch  |  Bell Coils  |  USB Audio    |
+|--------------------------------------------------------------|
+|    GPIO 23    |    GPIO 18    |  GPIO 17/27  | Logitech H340 |
+|               |               |              |    Headset    |
+|--------------------------------------------------------------|
+|  phone_daemon.py (Pulse/Hooks)  -> baresip (SIP stack)       |
+|  ring_control.py (Bells)         -> GPIO Driver              |
+|  webapp.py (Flask UI)            -> SIP + Logs + Control     |
++--------------------------------------------------------------+
+```
 
 ---
 
@@ -140,6 +156,258 @@ baresip
 # CTRL+C to exit
 ```
 
+### 4️⃣ Configure baresip
+
+**Create the initial config-file for baresip**
+Edit `/etc/retrophone/baresip/config`:
+
+```bash
+sudo tee /etc/retrophone/baresip/config >/dev/null <<'EOF'
+# UI Modules
+module                  stdio.so
+module                  httpd.so
+
+# Audio driver Modules
+module                  alsa.so
+
+# Media NAT modules
+module                  stun.so
+module                  turn.so
+module                  ice.so
+
+#------------------------------------------------------------------------------
+# Temporary Modules (loaded then unloaded)
+
+module_tmp              uuid.so
+module_tmp              account.so
+
+
+#------------------------------------------------------------------------------
+# Application Modules
+
+module_app              auloop.so
+module_app              contact.so
+module_app              debug_cmd.so
+module_app              menu.so
+module_app              ctrl_tcp.so
+module_app              vidloop.so
+
+#------------------------------------------------------------------------------
+# Module parameters
+
+
+# UI Modules parameters
+cons_listen             0.0.0.0:5555 # cons - Console UI UDP/TCP sockets
+
+http_listen             127.0.0.1:8000 # httpd - HTTP Server
+
+ctrl_tcp_listen         127.0.0.1:4444 # ctrl_tcp - TCP interface JSON
+
+evdev_device            /dev/input/event0
+
+# Opus codec parameters
+opus_bitrate            28000 # 6000-510000
+
+vumeter_stderr          yes
+
+# Selfview
+video_selfview          window # {window,pip}
+
+# Menu
+ring_aufile             none
+EOF
+
+**Create config file for the useraccount**
+Edit `/etc/retrophone/baresip/accounts`:
+### 2️⃣ Make it permanent (NetworkManager method)
+```bash
+sudo tee /etc/retrophone/baresip/accounts >/dev/null <<'EOF'
+; YOUR ACCOUNT
+<sip:phonenumber@sip.domain.url>;auth_user=USERNAME;auth_pass=YOUR_PASSWORD;outbound="sip:sip.domain.url;transport=udp";regint=300
+sudo tee /etc/NetworkManager/conf.d/wifi-powersave-off.conf >/dev/null <<'EOF'
+[connection]
+wifi.powersave = 2
+EOF
+```
+
+---
+
+### 5️⃣ Directory Structure
+
+```bash
+sudo mkdir -p /usr/local/retrophone /var/log/retrophone /run/retrophone
+sudo chown -R pi:pi /usr/local/retrophone /var/log/retrophone /run/retrophone
+```
+
+Copy all Python files:
+
+```bash
+sudo cp gpio_monitor.py gpio_hook_monitor.py ring_control.py phone_daemon.py webapp.py /usr/local/retrophone/
+sudo chmod +x /usr/local/retrophone/*.py
+```
+
+---
+
+### 6️⃣ Create a Dial Tone
+
+```bash
+sox -n -r 8000 -c 1 /usr/local/retrophone/dialtone.wav synth 10 sin 425
+```
+
+---
+
+### 7️⃣ Sudo Permissions
+
+```bash
+sudo visudo
+```
+
+Add:
+
+```text
+pi ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart baresip.service
+pi ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart phone-daemon.service
+pi ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart retrophone-web.service
+```
+
+Permission for the webapp to change usernames in the account-file
+```bash
+sudo chown -R pi:pi /etc/retrophone/baresip
+sudo chmod 640 /etc/retrophone/baresip/accounts
+sudo systemctl restart NetworkManager
+```
+
+---
+
+### 8️⃣ Systemd Services
+
+#### 📞 `/etc/systemd/system/phone-daemon.service`
+Edit `/etc/rc.local` and add before `exit 0`:
+```bash
+sudo tee /etc/systemd/system/phone-daemon.service >/dev/null <<'EOF'
+[Unit]
+Description=RetroPhone Dial/Hook Daemon
+After=network.target sound.target baresip.service
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/retrophone/phone_daemon.py
+Restart=on-failure
+User=pi
+Group=pi
+NoNewPrivileges=false
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now phone-daemon.service
+
+```
+
+#### 🔔 `/etc/systemd/system/retrophone-web.service`
+```bash
+sudo tee /etc/systemd/system/retrophone-web.service >/dev/null <<'EOF'
+[Unit]
+Description=RetroPhone Web UI
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/retrophone/webapp.py
+WorkingDirectory=/usr/local/retrophone
+User=pi
+Group=pi
+Environment=RETRO_WEB_USER=admin
+Environment=RETRO_WEB_PASS=secret
+Restart=on-failure
+NoNewPrivileges=false
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now retrophone-web.service
+
+```
+
+#### 📡 `/etc/systemd/system/baresip.service`
+Edit `/etc/systemd/system/baresip.service`:
+
+```bash
+sudo tee /etc/systemd/system/baresip.service >/dev/null <<'EOF'
+[Unit]
+Description=baresip SIP client
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/baresip -f /etc/retrophone/baresip
+Restart=always
+RestartSec=2
+# Root ist ok für GPIO-Setup und einfachen Start; alternativ eigenen User anlegen.
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now baresip.service
+
+```
+
+
+## 🖥️ Web Interface
+Accessible at `http://<raspberrypi-ip>:8080`  
+
+**Features**
+- Edit SIP accounts  
+- View logs (auto-refresh)  
+- Restart services  
+- Check service status (baresip / daemon / web)  
+
+Credentials set via `retrophone-web.service` environment variables.
+
+<p align="center">
+  <a href="media/webapp_login.png" target="_blank">
+    <img src="media/webapp_login.png" alt="Login View" width="30%" style="margin-right:10px;">
+  </a>
+  <a href="media/webapp_dashboard_1.png" target="_blank">
+    <img src="media/webapp_dashboard_1.png" alt="Dashboard View" width="30%" style="margin-right:10px;">
+  </a>
+<a href="media/webapp_sip_account.png" target="_blank">
+    <img src="media/webapp_sip_account.png" alt="Dashboard SIP Account View" width="30%" style="margin-right:10px;">
+</a>
+<a href="media/webapp_services.png" target="_blank">
+    <img src="media/webapp_services.png" alt="Dashboard Services View" width="30%" style="margin-right:10px;">
+  </a>
+</p>
+
+<p align="center"><em>Click any image to view full size in a new tab.</em></p>
+
+---
+
+## 🧾 Log Files
+
+## 🧾 Log Files & Helper Tools
+| Path | Description |
+|------|--------------|
+| `tail -f /var/log/retrophone/phone.log` | Main rotary daemon (dial, hook, call states) |
+| `tail -f /var/log/retrophone/ring.log` | Bell control |
+| `journalctl -u baresip` | baresip SIP logs |
+
+### 🆘 Helperscripts
+| Script | Function |
+|------------------|------------------|
+| `gpio_monitor.py` | Show live GPIO states |
+| `gpio_hook_monitor.py` | Hook only |
+| `ring_control.py` | Manual ring test |
+- Check service status (baresip / daemon / web)  
+
+---
+
 ### 📝 Configure logrotate
 
 ```bash
@@ -157,6 +425,7 @@ sudo tee /etc/logrotate.d/retrophone >/dev/null <<'EOF'
     endscript
 }
 EOF
+```
 
 ---
 
@@ -206,52 +475,6 @@ iw wlan0 get power_save
 
 ---
 
-## 🖥️ Web Interface
-Accessible at `http://<raspberrypi-ip>:8080`  
-
-**Features**
-- Edit SIP accounts  
-- View logs (auto-refresh)  
-- Restart services  
-- Check service status (baresip / daemon / web)  
-
-Credentials set via `retrophone-web.service` environment variables.
-
-<p align="center">
-  <a href="media/webapp_login.png" target="_blank">
-    <img src="media/webapp_login.png" alt="Login View" width="30%" style="margin-right:10px;">
-  </a>
-  <a href="media/webapp_dashboard_1.png" target="_blank">
-    <img src="media/webapp_dashboard_1.png" alt="Dashboard View" width="30%" style="margin-right:10px;">
-  </a>
-<a href="media/webapp_sip_account.png" target="_blank">
-    <img src="media/webapp_sip_account.png" alt="Dashboard SIP Account View" width="30%" style="margin-right:10px;">
-</a>
-<a href="media/webapp_services.png" target="_blank">
-    <img src="media/webapp_services.png" alt="Dashboard Services View" width="30%" style="margin-right:10px;">
-  </a>
-</p>
-
-<p align="center"><em>Click any image to view full size in a new tab.</em></p>
-
-
----
-
-## 🧾 Log Files & Helper Tools
-| File | Purpose |
-|------------------|------------------|
-| `/var/log/retrophone/phone.log` | Main daemon (dial, hook, call state) |
-| `/var/log/retrophone/ring.log` | Bell control |
-| `journalctl -u baresip` | baresip logs |
-
-**Helper scripts**
-| Script | Function |
-|------------------|------------------|
-| `gpio_monitor.py` | Show live GPIO states |
-| `gpio_hook_monitor.py` | Hook only |
-| `ring_control.py` | Manual ring test |
-
----
 
 ## 🎧 Audio Troubleshooting
 If baresip reports `Unknown error -22`, check your ALSA config:
@@ -268,23 +491,6 @@ aplay -D plughw:0,0 /usr/local/retrophone/dialtone.wav
 
 ---
 
-## 🔬 Architecture Diagram (conceptual)
-```
-+--------------------------------------------------------------+
-|                     Retro Rotary SIP Phone                   |
-|--------------------------------------------------------------|
-|  Rotary Dial  |  Hook Switch  |  Bell Coils  |  USB Audio    |
-|--------------------------------------------------------------|
-|    GPIO 23    |    GPIO 18    |  GPIO 17/27  | Logitech H340 |
-|               |               |              |    Headset    |
-|--------------------------------------------------------------|
-|  phone_daemon.py (Pulse/Hooks)  -> baresip (SIP stack)       |
-|  ring_control.py (Bells)         -> GPIO Driver              |
-|  webapp.py (Flask UI)            -> SIP + Logs + Control     |
-+--------------------------------------------------------------+
-```
-
----
 
 ## 🧠 Credits & References
 - Electronics and wiring inspired by [CrazyRobMiles / RaspberryPi-DialTelephone](https://github.com/CrazyRobMiles/RaspberryPi-DialTelephone)  
@@ -293,18 +499,18 @@ aplay -D plughw:0,0 /usr/local/retrophone/dialtone.wav
 
 ---
 
-## 🪪 License
+### 🪪 License
 Released under the **MIT License**.  
 Third-party components retain their original licenses.
 
 ---
 
-## 🔎 Keywords for Discoverability
+### 🔎 Keywords for Discoverability
 Retro rotary phone Raspberry Pi • Raspberry Pi Zero 2 W SIP phone • baresip python integration • GPIO pulse dialing • retro VoIP hardware project • mechanical bell driver • Flask web UI • Debian Trixie Raspberry Pi • DIY vintage telephone • embedded Linux telephony
 
 ---
 
-## ⭐ Support & Collaboration
+### ⭐ Support & Collaboration
 If you're a fan of vintage hardware and open-source telephony, give this project a star on GitHub or share your own build via a pull request or issue!
 And if you enjoyed this project or found it helpful in setting up your own retro phone, you can buy me a coffee to help keep the bells ringing and the code flowing. ☕👇  
 
