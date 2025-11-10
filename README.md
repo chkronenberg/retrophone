@@ -1,3 +1,5 @@
+<meta name="google-site-verification" content="3L7_pkniryoffr8tI1BwGj-naHbL4_P7tpijfPzzaCo" />
+
 # ☎️ Retro Rotary SIP Phone  
 **Convert a classic rotary dial phone into a working SIP VoIP phone using a Raspberry Pi Zero 2 W, Debian Trixie, Baresip and Python 3**
 
