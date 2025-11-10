@@ -9,6 +9,7 @@
 ---
 
 ## 📚 Table of Contents
+
 - [Overview](#-overview)
 - [Features](#-features)
 - [Hardware Setup](#-hardware-setup)
@@ -37,6 +38,7 @@ Built on **Raspberry Pi Zero 2 W** running **Debian Trixie**, **Baresip**, and *
 ---
 
 ## 🧩 Features
+
 | Function | Description |
 |-----------|--------------|
 | ✅ Incoming calls | Mechanical bells ring; lifting handset answers |
