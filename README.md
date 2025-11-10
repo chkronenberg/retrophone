@@ -26,7 +26,7 @@ This project transforms an old **retro rotary dial phone** into a modern fully f
 
 ---
 
-## 🧩 Features
+### 🧩 Features
 
 | Function | Description |
 |-----------|--------------|
@@ -40,7 +40,7 @@ This project transforms an old **retro rotary dial phone** into a modern fully f
 
 ---
 
-## 🪛 Hardware Setup
+### 🪛 Hardware Setup
 
 | Component | GPIO (BCM) | Description | Logic |
 |------------|------------|-------------|-------|
@@ -346,7 +346,45 @@ Environment variables in `retrophone-web.service` control login credentials.
 
 ---
 
-## 🎧 Audio Troubleshooting
+## Troubleshooting
+
+### 📡 WLAN Stability on Raspberry Pi Zero 2 W
+The onboard Wi-Fi chipset (Broadcom brcmfmac) uses aggressive power-saving by default.  
+This may cause random disconnects, lost SIP registration, or dropped Flask sessions.
+
+To prevent this, **disable Wi-Fi power management** permanently:
+
+```bash
+sudo iw dev wlan0 set power_save off
+```
+
+To make it persistent, add the following line to Edit `/etc/NetworkManager/conf.d/wifi-powersave-off.conf` or create the file directly:
+
+```bash
+sudo tee /etc/NetworkManager/conf.d/default-wifi-powersave-off.conf >/dev/null <<'EOF'
+
+[connection]
+wifi.powersave = 2
+EOF
+
+sudo systemctl restart NetworkManager
+```
+
+The second action to improve the behaviour of the wlan-card is to update the driver and set some lines in the config:
+
+```bash
+sudo rmmod brcmfmac
+sudo modprobe brcmfmac roamoff=1 feature_disable=0x82000
+```
+
+And the last option is to update the firmware of the brcm-chip:
+
+```bash
+sudo apt install --reinstall firmware-brcm80211 -y
+```
+
+
+### 🎧 Audio Troubleshooting
 
 If baresip logs errors like `Unknown error -22`:
 
@@ -386,7 +424,6 @@ aplay -D plughw:0,0 /usr/local/retrophone/dialtone.wav
 
 - Original rotary wiring idea based on [**CrazyRobMiles** / RaspberryPi-DialTelephone](https://github.com/CrazyRobMiles/RaspberryPi-DialTelephone)
 - SIP core powered by [**baresip**](https://github.com/baresip/baresip)
-- Hardware testing and refinement by **Christian (Switzerland)** 👏
 
 ---
 
@@ -414,3 +451,8 @@ All third-party components retain their original licenses.
 ✔️ Fully automatic startup via systemd  
 
 > **Retro Rotary SIP Phone – where analog charm meets digital tech.**
+> ---
+
+## ⭐ Support & Collaboration
+If you love vintage hardware and open-source telephony, give this project a ⭐ on GitHub or share your own build via pull request or issue!
+
