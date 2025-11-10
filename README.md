@@ -109,7 +109,54 @@ It shows the Raspberry Pi Zero 2 W GPIO connections, MOSFET bell driver, diodes,
 ---
 
 ## ⚙️ Software Installation (Step by Step)
-*(Keep your detailed setup commands and systemd service definitions here — they are already correct in your current repo.)*
+
+### 1️⃣ Base System
+
+Minimal Debian Trixie / Bookworm Lite.  
+Enable SSH and network.
+
+### 2️⃣ Dependencies
+
+```bash
+sudo apt-get update
+sudo apt-get upgrade -y
+sudo apt-get install -y \  python3 python3-pip python3-flask python3-gpiozero python3-rpi.gpio \  alsa-utils sox git \  build-essential libasound2-dev libssl-dev libz-dev libopus-dev libavformat-dev \  libavcodec-dev libavutil-dev libre-dev libspandsp-dev libreadline-dev \  uuid-dev libedit-dev libmicrohttpd-dev systemd python3-venv \ baresip libasound2
+```
+
+---
+
+### 3️⃣ Create folders for **retrophone** and **baresip**
+
+```bash
+sudo mkdir -p /etc/retrophone/baresip
+sudo mkdir -p /usr/local/retrophone
+sudo mkdir -p /var/log/retrophone
+```
+
+Run once to generate default config:
+
+```bash
+baresip
+# CTRL+C to exit
+```
+
+### 📝 Configure logrotate
+
+```bash
+sudo tee /etc/logrotate.d/retrophone >/dev/null <<'EOF'
+/var/log/retrophone/*.log {
+    daily
+    rotate 14
+    compress
+    missingok
+    notifempty
+    create 0640 root root
+    sharedscripts
+    postrotate
+        systemctl kill -s HUP phone-daemon.service 2>/dev/null || true
+    endscript
+}
+EOF
 
 ---
 
