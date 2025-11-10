@@ -190,6 +190,58 @@ Edit `/etc/retrophone/baresip/config`:
 
 ```bash
 sudo tee /etc/retrophone/baresip/config >/dev/null <<'EOF'
+#
+# baresip configuration
+#
+#------------------------------------------------------------------------------
+
+# Core
+poll_method             epoll           # poll, select, epoll ..
+
+# SIP
+#sip_listen             0.0.0.0:5060
+#sip_certificate        cert.pem
+sip_cafile              /etc/ssl/certs/ca-certificates.crt
+#sip_trans_def          udp
+#sip_verify_server      yes
+
+# Call
+call_local_timeout      120
+call_max_calls          4
+call_hold_other_calls   yes
+
+# Audio
+#audio_path             /usr/share/baresip
+audio_player            alsa,plughw:0,0
+audio_source            alsa,plughw:0,0
+#audio_alert            alsa,plughw:0,0
+
+#ausrc_srate            48000
+#auplay_srate           48000
+audio_srate             48000
+#ausrc_channels         0
+#auplay_channels        0
+#audio_txmode           poll            # poll, thread
+audio_level             no
+ausrc_format            s16             # s16, float, ..
+auplay_format           s16             # s16, float, ..
+auenc_format            s16             # s16, float, ..
+audec_format            s16             # s16, float, ..
+audio_buffer            20-160          # ms
+
+# AVT - Audio/Video Transport
+rtp_tos                 184
+#rtp_ports              10000-20000
+#rtp_bandwidth          512-1024 # [kbit/s]
+rtcp_mux                no
+jitter_buffer_type      fixed           # off, fixed, adaptive
+jitter_buffer_delay     5-10            # frames
+#jitter_buffer_wish     6               # frames for start
+rtp_stats               no
+
+#------------------------------------------------------------------------------
+# Modules
+
 # UI Modules
 module                  stdio.so
 module                  httpd.so
