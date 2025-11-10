@@ -170,6 +170,24 @@ Accessible at `http://<raspberrypi-ip>:8080`
 
 Credentials set via `retrophone-web.service` environment variables.
 
+<p align="center">
+  <a href="media/webapp_login.png" target="_blank">
+    <img src="media/webapp_login.png" alt="Login View" width="30%" style="margin-right:10px;">
+  </a>
+  <a href="media/webapp_dashboard_1.png" target="_blank">
+    <img src="media/webapp_dashboard_1.png" alt="Dashboard View" width="30%" style="margin-right:10px;">
+  </a>
+<a href="media/webapp_sip_account.png" target="_blank">
+    <img src="media/webapp_sip_account.png" alt="Dashboard SIP Account View" width="30%" style="margin-right:10px;">
+</a>
+<a href="media/webapp_services.png" target="_blank">
+    <img src="media/webapp_services.png" alt="Dashboard Services View" width="30%" style="margin-right:10px;">
+  </a>
+</p>
+
+<p align="center"><em>Click any image to view full size in a new tab.</em></p>
+
+
 ---
 
 ## 🧾 Log Files & Helper Tools
