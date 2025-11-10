@@ -14,14 +14,11 @@
 - [Features](#-features)
 - [Hardware Setup](#-hardware-setup)
 - [Software Installation](#-software-installation-step-by-step)
-- [WLAN & Network Stability](#-wlan--network-stability)
 - [Web Interface](#️-web-interface)
 - [Log Files & Helper Tools](#-log-files--helper-tools)
+- [WLAN & Network Stability](#-wlan--network-stability)
 - [Troubleshooting (Audio & SIP)](#-audio-troubleshooting)
-- [Architecture Diagram](#-architecture-diagram-conceptual)
 - [Credits & References](#-credits--references)
-- [License](#-license)
-- [Keywords & Support](#-keywords-for-discoverability)
 
 ---
 
@@ -216,6 +213,7 @@ video_selfview          window # {window,pip}
 # Menu
 ring_aufile             none
 EOF
+```
 
 **Create config file for the useraccount**
 Edit `/etc/retrophone/baresip/accounts`:
@@ -224,9 +222,6 @@ Edit `/etc/retrophone/baresip/accounts`:
 sudo tee /etc/retrophone/baresip/accounts >/dev/null <<'EOF'
 ; YOUR ACCOUNT
 <sip:phonenumber@sip.domain.url>;auth_user=USERNAME;auth_pass=YOUR_PASSWORD;outbound="sip:sip.domain.url;transport=udp";regint=300
-sudo tee /etc/NetworkManager/conf.d/wifi-powersave-off.conf >/dev/null <<'EOF'
-[connection]
-wifi.powersave = 2
 EOF
 ```
 
@@ -256,7 +251,7 @@ sox -n -r 8000 -c 1 /usr/local/retrophone/dialtone.wav synth 10 sin 425
 
 ---
 
-### 7️⃣ Sudo Permissions
+### 7️⃣ Additional Permissions for "pi"
 
 ```bash
 sudo visudo
@@ -270,11 +265,16 @@ pi ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart phone-daemon.service
 pi ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart retrophone-web.service
 ```
 
-Permission for the webapp to change usernames in the account-file
+**Permission for the webapp to change usernames in the account-file**
 ```bash
 sudo chown -R pi:pi /etc/retrophone/baresip
 sudo chmod 640 /etc/retrophone/baresip/accounts
 sudo systemctl restart NetworkManager
+```
+**Permission for pi to change account details via Webapp**
+```bash
+sudo chown -R pi:pi /etc/retrophone/baresip
+sudo chmod 640 /etc/retrophone/baresip/accounts
 ```
 
 ---
@@ -389,9 +389,8 @@ Credentials set via `retrophone-web.service` environment variables.
 
 ---
 
-## 🧾 Log Files
-
 ## 🧾 Log Files & Helper Tools
+
 | Path | Description |
 |------|--------------|
 | `tail -f /var/log/retrophone/phone.log` | Main rotary daemon (dial, hook, call states) |
@@ -404,7 +403,6 @@ Credentials set via `retrophone-web.service` environment variables.
 | `gpio_monitor.py` | Show live GPIO states |
 | `gpio_hook_monitor.py` | Hook only |
 | `ring_control.py` | Manual ring test |
-- Check service status (baresip / daemon / web)  
 
 ---
 
@@ -412,17 +410,15 @@ Credentials set via `retrophone-web.service` environment variables.
 
 ```bash
 sudo tee /etc/logrotate.d/retrophone >/dev/null <<'EOF'
-/var/log/retrophone/*.log {
+/var/log/retrophone/phone.log /var/log/retrophone/ring.log {
     daily
-    rotate 14
-    compress
+    rotate 7
     missingok
     notifempty
-    create 0640 root root
-    sharedscripts
-    postrotate
-        systemctl kill -s HUP phone-daemon.service 2>/dev/null || true
-    endscript
+    compress
+    delaycompress
+    copytruncate
+    create 640 pi pi
 }
 EOF
 ```
@@ -477,8 +473,46 @@ iw wlan0 get power_save
 
 
 ## 🎧 Audio Troubleshooting
-If baresip reports `Unknown error -22`, check your ALSA config:
+
+### 🔊 Audio Device Check
+
+Before configuring Baresip or testing dial tones, check which audio devices are available on your Raspberry Pi.
+
+Run the following commands:
+
+```bash
+aplay -l
+arecord -l
+```
+
+This lists all playback and recording devices detected by ALSA.
+**Example output:**
+
 ```text
+**** List of PLAYBACK Hardware Devices ****
+card 0: H340 [Logitech USB Headset H340], device 0: USB Audio [USB Audio]
+  Subdevices: 1/1
+  Subdevice #0: subdevice #0
+card 1: vc4hdmi [vc4-hdmi], device 0: MAI PCM i2s-hifi-0 [MAI PCM i2s-hifi-0]
+  Subdevices: 1/1
+  Subdevice #0: subdevice #0
+**** List of CAPTURE Hardware Devices ****
+card 0: H340 [Logitech USB Headset H340], device 0: USB Audio [USB Audio]
+  Subdevices: 1/1
+  Subdevice #0: subdevice #0
+```
+
+In our case the playback hardware is the "Logitech USB Headset H340".
+card 0, device 0 -> plughw:0,0
+And the capture hardware as the following numbers:
+card 0, device 0 -> plughw:0,0
+
+
+If baresip reports `Unknown error -22`, check your ALSA config:
+
+Edit `/etc/retrophone/baresip/config`
+
+```ini
 audio_player alsa,plughw:0,0
 audio_source alsa,plughw:0,0
 audio_alert alsa,null
