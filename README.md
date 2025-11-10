@@ -128,6 +128,31 @@ It shows the Raspberry Pi Zero 2 W GPIO connections, MOSFET bell driver, diodes,
 
 ## ⚙️ Software Installation (Step by Step)
 
+### ⚙️ Automated Installation Script
+
+To simplify setup, you can install and configure the entire RetroPhone environment with a single command using the `install_retrophone.sh` script.  
+This script performs all required steps automatically:
+
+- Installs system dependencies (Python, Flask, baresip, ALSA, etc.)  
+- Creates required directories under `/usr/local/retrophone`, `/etc/retrophone`, and `/var/log/retrophone`  
+- Copies all Python scripts and configuration files  
+- Generates a default dial tone file  
+- Sets correct permissions and sudo rules  
+- Installs and enables the systemd services (`baresip`, `phone-daemon`, `retrophone-web`)  
+
+**Run the following commands on your Raspberry Pi to use the script and install retrophone:**
+
+```bash
+cd /tmp
+wget -O install_retrophone.sh https://github.com/chkronenberg/retrophone/blob/main/install_retrophone.sh
+chmod +x install_retrophone.sh
+sudo ./install_retrophone.sh
+```
+>**🧠 Tip:**
+>The script should be executed with **`sudo`** to ensure all directories, permissions, and services are created correctly.
+>After completion, your Retro Rotary SIP Phone will be fully operational — including baresip registration, ringing, and web interface.
+
+
 ### 1️⃣ Base System
 
 Minimal Debian Trixie / Bookworm Lite.  
