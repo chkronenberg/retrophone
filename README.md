@@ -1,11 +1,20 @@
 # ☎️ Retro Rotary SIP Phone  
 **Old Swiss Rotary Phone revived with Raspberry Pi Zero 2W, Debian Trixie, baresip, Python and real bells**
 
+[![Python 3](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
+[![Raspberry Pi Zero 2 W](https://img.shields.io/badge/Hardware-Raspberry%20Pi%20Zero%202%20W-red.svg)](https://www.raspberrypi.com/)
+[![Flask](https://img.shields.io/badge/Flask-Web%20UI-green.svg)](https://flask.palletsprojects.com/)
+[![License MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+
 ---
 
 ## 🧭 Overview
 
-This project transforms an original Swiss rotary telephone into a **fully working SIP phone** with:
+This open-source project shows how to interface classic telephony hardware - rotary dial, hook switch, and mechanical bells - with digital VoIP systems.  
+Ideal for makers, vintage tech enthusiasts, and embedded engineers exploring **hardware GPIO control, SIP signaling, and sound integration** on Raspberry Pi.
+
+This project transforms an old **retro rotary dial phone** into a modern fully functional **SIP VoIP phone** using a **Raspberry Pi Zero 2 W**, **Debian Trixie**, **Baresip**, and **Python 3**:
 
 - 📞 Incoming and outgoing VoIP calls via **baresip**
 - 🔔 Authentic **mechanical ringing** driven by GPIOs
