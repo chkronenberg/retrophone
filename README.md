@@ -49,15 +49,47 @@ Built on **Raspberry Pi Zero 2 W** running **Debian Trixie**, **Baresip**, and *
 ---
 
 ## 🪛 Hardware Setup
+
+This project uses an authentic rotary dial telephone combined with modern Raspberry Pi hardware.  
+Below is the list of components used and verified to work with the current design.
+
+### 🧩 Origin Story
+
+The rotary phone used in this build wasn’t bought online — it was discovered in the **grandfather’s attic**, covered in dust but still mechanically perfect.  
+After some careful cleaning and rewiring, the phone found a new life as a fully working SIP client.
+
+### ⚙️ Required Components
+
+| Component | Description |
+|------------|--------------|
+| ☎️ **Old-style rotary telephone** | The prototype uses a PTT **Modell 29**, found in the family attic. Any similar pulse-dial model will work. |
+| 🥧 **Raspberry Pi Zero 2 W** | Compact, low-power computer controlling GPIO and running the SIP stack. Any variant of the Zero 2 W will do. |
+| 🔌 **Dual D4184 MOSFET module** | Used as high-current switches to drive the twin mechanical bell coils directly from the Pi GPIO pins. |
+| ⚡ **2 × 1N4007 diodes (1 A / 1000 V)** | Wired in reverse across the bell coil outputs from the D4184 MOSFETs. These protect the switches from the voltage spike generated when the magnetic field in the coils collapses. **Ensure the band faces the positive line!** |
+| 🔋 **Power supply 12 V → 35 V** | Boost converter used to power the mechanical bell coils. |
+| 🔋 **Power supply 12 V → 5 V** | Step-down converter used to power the Raspberry Pi. |
+| 🔌 **12 V DC power adapter** | Common supply feeding both converters above. |
+| 🧠 **Raspberry Pi GPIO breakout board** | For clean wiring and to mount all discrete components safely. |
+| 🎧 **USB audio adapter** | Provides microphone and speaker ports for handset audio. |
+| 🔗 **Micro-USB “On-The-Go” (OTG) cable** | Connects the USB audio interface to the Raspberry Pi Zero 2 W. |
+
+> The D4184 MOSFET module drives the two bell coils (RING_A and RING_B).  
+> Each coil is protected by a 1N4007 diode, preventing reverse voltage damage when the magnetic field collapses.  
+> A single 12 V power source feeds both the bell (via boost converter) and the Raspberry Pi (via step-down converter).
+
+---
+
+### 🔩 GPIO Mapping Summary
+
 | Signal | GPIO (BCM) | Description | Logic |
-|---------|-------------|--------------|-------|
+|---------|-------------|-------------|--------|
 | HOOK | 18 | Handset switch | 0 = off-hook  1 = on-hook |
-| PULSE | 23 | Rotary dial impulses | 1 = pulse active |
+| PULSE | 23 | Rotary dial pulses | 1 = pulse active |
 | POS1 | 24 | Dial return contact | 0 = dial turning |
 | RING_A | 17 | Bell coil A | controlled by `ring_control.py` |
-| RING_B | 27 | Bell coil B | optional second coil |
+| RING_B | 27 | Bell coil B | optional, for dual-coil bells |
 
-> The original Swiss pulse logic pulls to GND — no extra resistors required.
+> The original Swiss pulse-dial logic pulls to GND — no external pull-down resistors needed.
 
 ---
 
