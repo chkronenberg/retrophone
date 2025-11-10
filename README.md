@@ -64,16 +64,16 @@ After some careful cleaning and rewiring, the phone found a new life as a fully 
 
 | Component | Description |
 |------------------|------------------|
-| ☎️ **Old-style rotary telephone** | The prototype uses a PTT **Modell 29**, found in the family attic. Any similar pulse-dial model will work. |
-| 🥧 **Raspberry Pi Zero 2 W** | Compact, low-power computer controlling GPIO and running the SIP stack. Any variant of the Zero 2 W will do. |
-| 🔌 **Dual D4184 MOSFET module** | Used as high-current switches to drive the twin mechanical bell coils directly from the Pi GPIO pins. |
-| ⚡ **2 × 1N4007 diodes (1 A / 1000 V)** | Wired in reverse across the bell coil outputs from the D4184 MOSFETs. These protect the switches from the voltage spike generated when the magnetic field in the coils collapses. **Ensure the band faces the positive line!** |
-| 🔋 **Power supply 12 V → 35 V** | Boost converter used to power the mechanical bell coils. |
-| 🔋 **Power supply 12 V → 5 V** | Step-down converter used to power the Raspberry Pi. |
-| 🔌 **12 V DC power adapter** | Common supply feeding both converters above. |
-| 🧠 **Raspberry Pi GPIO breakout board** | For clean wiring and to mount all discrete components safely. |
-| 🎧 **USB audio adapter** | Provides microphone and speaker ports for handset audio. |
-| 🔗 **Micro-USB “On-The-Go” (OTG) cable** | Connects the USB audio interface to the Raspberry Pi Zero 2 W. |
+| ☎️ Old-style rotary telephone | The prototype uses a PTT **Modell 29**, found in the family attic. Any similar pulse-dial model will work. |
+| 🥧 Raspberry Pi Zero 2W | Compact, low-power computer controlling GPIO and running the SIP stack. Any variant of the Zero 2 W will do. |
+| 🔌 Dual D4184 MOSFET module | Used as high-current switches to drive the twin mechanical bell coils directly from the Pi GPIO pins. |
+| ⚡ 2 × 1N4007 diodes (1A / 1000V) | Wired in reverse across the bell coil outputs from the D4184 MOSFETs. These protect the switches from the voltage spike generated when the magnetic field in the coils collapses. **Ensure the band faces the positive line!** |
+| 🔋 Power supply 12V → 35V | Boost converter used to power the mechanical bell coils. |
+| 🔋 Power supply 12V → 5V | Step-down converter used to power the Raspberry Pi. |
+| 🔌 12 V DC power adapter | Common supply feeding both converters above. |
+| 🧠 Raspberry Pi GPIO breakout board | For clean wiring and to mount all discrete components safely. |
+| 🎧 USB audio adapter | Provides microphone and speaker ports for handset audio. |
+| 🔗 Micro-USB “On-The-Go” (OTG) cable | Connects the USB audio interface to the Raspberry Pi Zero 2 W. |
 
 > The D4184 MOSFET module drives the two bell coils (RING_A and RING_B).  
 > Each coil is protected by a 1N4007 diode, preventing reverse voltage damage when the magnetic field collapses.  
