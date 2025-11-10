@@ -40,7 +40,7 @@ Built on **Raspberry Pi Zero 2 W** running **Debian Trixie**, **Baresip**, and *
 ## 🧩 Features
 
 | Function | Description |
-|-----------|--------------|
+|------------------|------------------|
 | ✅ Incoming calls | Mechanical bells ring; lifting handset answers |
 | ✅ Outgoing calls | Rotary pulses decoded & sent to SIP |
 | ✅ Dial tone | Analog-like dial tone playback |
@@ -63,7 +63,7 @@ After some careful cleaning and rewiring, the phone found a new life as a fully 
 ### ⚙️ Required Components
 
 | Component | Description |
-|------------|--------------|
+|------------------|------------------|
 | ☎️ **Old-style rotary telephone** | The prototype uses a PTT **Modell 29**, found in the family attic. Any similar pulse-dial model will work. |
 | 🥧 **Raspberry Pi Zero 2 W** | Compact, low-power computer controlling GPIO and running the SIP stack. Any variant of the Zero 2 W will do. |
 | 🔌 **Dual D4184 MOSFET module** | Used as high-current switches to drive the twin mechanical bell coils directly from the Pi GPIO pins. |
@@ -161,14 +161,14 @@ Credentials set via `retrophone-web.service` environment variables.
 
 ## 🧾 Log Files & Helper Tools
 | File | Purpose |
-|------|----------|
+|------------------|------------------|
 | `/var/log/retrophone/phone.log` | Main daemon (dial, hook, call state) |
 | `/var/log/retrophone/ring.log` | Bell control |
 | `journalctl -u baresip` | baresip logs |
 
 **Helper scripts**
 | Script | Function |
-|---------|----------|
+|------------------|------------------|
 | `gpio_monitor.py` | Show live GPIO states |
 | `gpio_hook_monitor.py` | Hook only |
 | `ring_control.py` | Manual ring test |
