@@ -89,9 +89,12 @@ After some careful cleaning and rewiring, the phone found a new life as a fully 
 > Each coil is protected by a 1N4007 diode, preventing reverse voltage damage when the magnetic field collapses.  
 > A single 12 V power source feeds both the bell (via boost converter) and the Raspberry Pi (via step-down converter).
 
-## 3D-Printed Holder
-To hold all the components inside the old telephone. The following Holder is needed.
-![3D-Printed Component Holder](media/holder.stl)
+## 🖨️ 3D-Printed Holder
+To securely mount all components inside the old telephone, a custom 3D-printed holder is used.
+Required part:  
+👉 [3D-Printed Component Holder](media/holder.stl)
+
+The holder is designed to fit perfectly into the telephone housing and can be mounted using the original screw holes. All electronic components are fixed directly onto the holder, keeping everything clean, stable, and reversible without modifying the original phone.
 
 ---
 
