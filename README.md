@@ -16,7 +16,7 @@ If you enjoyed this project or found it helpful in setting up your own retro pho
 - [Overview](#-overview)
 - [Features](#-features)
 - [Hardware Setup](#-hardware-setup)
-- [Software Installation](#-software-installation-step-by-step)
+- [Software Installation](#-Software-Installation)
 - [Web Interface](#️-web-interface)
 - [Log Files & Helper Tools](#-log-files--helper-tools)
 - [WLAN & Network Stability](#-wlan--network-stability)
@@ -138,7 +138,7 @@ It shows the Raspberry Pi Zero 2 W GPIO connections, MOSFET bell driver, diodes,
 
 ---
 
-## ⚙️ Software Installation (Step by Step)
+## ⚙️ Software Installation
 
 ### ⚙️ Automated Installation Script
 
