@@ -50,13 +50,7 @@ echo "==> Pakete installieren (apt-get)..."
 
 sudo apt-get update
 sudo apt-get upgrade -y
-sudo apt-get install -y \  
-  python3 python3-pip python3-flask python3-gpiozero python3-rpi.gpio \  
-  alsa-utils sox git \  
-  build-essential libasound2-dev libssl-dev libz-dev libopus-dev libavformat-dev \  
-  libavcodec-dev libavutil-dev libre-dev libspandsp-dev libreadline-dev \  
-  uuid-dev libedit-dev libmicrohttpd-dev systemd python3-venv \ 
-  baresip libasound2
+sudo apt-get install -y python3 python3-pip python3-flask python3-gpiozero python3-rpi.gpio alsa-utils sox git build-essential libasound2-dev libssl-dev libz-dev libopus-dev libavformat-dev libavcodec-dev libavutil-dev libre-dev libspandsp-dev libreadline-dev uuid-dev libedit-dev libmicrohttpd-dev systemd python3-venv  baresip libasound2
 
 
 # --- 3. baresip kompilieren (falls nicht vorhanden) ---------------------------
