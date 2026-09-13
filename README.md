@@ -17,7 +17,7 @@ If you enjoyed this project or found it helpful in setting up your own retro pho
 - [Overview](#-overview)
 - [Features](#-features)
 - [Hardware Setup](#-hardware-setup)
-- [Software Installation](#-Software-Installation)
+- [Software Installation](#️-software-installation)
 - [Web Interface](#️-web-interface)
 - [Log Files & Helper Tools](#-log-files--helper-tools)
 - [WLAN & Network Stability](#-wlan--network-stability)
@@ -139,6 +139,7 @@ It shows the Raspberry Pi Zero 2 W GPIO connections, MOSFET bell driver, diodes,
 | RING_B | 27 | Bell coil B | controlled by `ring_control.py` |
 
 > The original Swiss pulse-dial logic pulls to GND — no external pull-down resistors needed.
+> All GPIO assignments can be changed later under **Settings** in the Web UI.
 
 ---
 
@@ -181,7 +182,8 @@ Enable SSH and network.
 ```bash
 sudo apt-get update
 sudo apt-get upgrade -y
-sudo apt-get install -y \  python3 python3-pip python3-flask python3-gpiozero python3-rpi.gpio \  alsa-utils sox git \  build-essential libasound2-dev libssl-dev libz-dev libopus-dev libavformat-dev \  libavcodec-dev libavutil-dev libre-dev libspandsp-dev libreadline-dev \  uuid-dev libedit-dev libmicrohttpd-dev systemd python3-venv \ baresip libasound2
+sudo apt-get install -y python3 python3-flask python3-gpiozero python3-rpi.gpio \
+  alsa-utils sox wget baresip
 ```
 
 ---
@@ -192,13 +194,13 @@ sudo apt-get install -y \  python3 python3-pip python3-flask python3-gpiozero py
 sudo mkdir -p /etc/retrophone/baresip
 sudo mkdir -p /usr/local/retrophone
 sudo mkdir -p /var/log/retrophone
+sudo mkdir -p /run/retrophone
 ```
 
 Run once to generate default config:
 
 ```bash
-baresip
-# CTRL+C to exit
+sudo -u pi baresip -f /etc/retrophone/baresip -e "quit"
 ```
 
 ### 4️⃣ Configure baresip
@@ -232,7 +234,7 @@ call_hold_other_calls   yes
 #audio_path             /usr/share/baresip
 audio_player            alsa,plughw:0,0
 audio_source            alsa,plughw:0,0
-#audio_alert            alsa,plughw:0,0
+audio_alert             alsa,null
 
 #ausrc_srate            48000
 #auplay_srate           48000
@@ -298,7 +300,7 @@ cons_listen             0.0.0.0:5555 # cons - Console UI UDP/TCP sockets
 
 http_listen             127.0.0.1:8000 # httpd - HTTP Server
 
-ctrl_tcp_listen         127.0.0.1:4444 # ctrl_tcp - TCP interface JSON
+ctrl_tcp_listen         0.0.0.0:4444 # ctrl_tcp - TCP interface JSON
 
 evdev_device            /dev/input/event0
 
@@ -331,14 +333,25 @@ EOF
 
 ```bash
 sudo mkdir -p /usr/local/retrophone /var/log/retrophone /run/retrophone
-sudo chown -R pi:pi /usr/local/retrophone /var/log/retrophone /run/retrophone
+sudo mkdir -p /etc/retrophone
+sudo chown -R pi:pi /usr/local/retrophone /var/log/retrophone /run/retrophone /etc/retrophone
+sudo tee /etc/tmpfiles.d/retrophone.conf >/dev/null <<'EOF'
+d /run/retrophone 0755 pi pi -
+EOF
+sudo systemd-tmpfiles --create /etc/tmpfiles.d/retrophone.conf
 ```
 
-Copy all Python files:
+Copy all application files and install the shared configuration:
 
 ```bash
-sudo cp gpio_monitor.py gpio_hook_monitor.py ring_control.py phone_daemon.py webapp.py /usr/local/retrophone/
+sudo cp files/gpio_monitor.py files/gpio_hook_monitor.py files/ring_control.py \
+  files/phone_daemon.py files/webapp.py files/backup_retrophone.sh \
+  files/persist_logs.sh files/favicon.ico /usr/local/retrophone/
+sudo cp files/config.example.json /etc/retrophone/config.json
 sudo chmod +x /usr/local/retrophone/*.py
+sudo chmod +x /usr/local/retrophone/*.sh
+sudo chown pi:pi /etc/retrophone/config.json
+sudo chmod 640 /etc/retrophone/config.json
 ```
 
 ---
@@ -363,14 +376,10 @@ Add:
 pi ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart baresip.service
 pi ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart phone-daemon.service
 pi ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart retrophone-web.service
+pi ALL=(root) NOPASSWD: /usr/local/retrophone/backup_retrophone.sh backup
 ```
 
-**Permission for the webapp to change usernames in the account-file**
-```bash
-sudo chown -R pi:pi /etc/retrophone/baresip
-sudo chmod 640 /etc/retrophone/baresip/accounts
-```
-**Permission for pi to change account details via Webapp**
+**Permissions for the Web UI to change the SIP account**
 ```bash
 sudo chown -R pi:pi /etc/retrophone/baresip
 sudo chmod 640 /etc/retrophone/baresip/accounts
@@ -404,7 +413,7 @@ sudo systemctl enable --now phone-daemon.service
 
 ```
 
-#### 🔔 `/etc/systemd/system/retrophone-web.service`
+#### 🌐 `/etc/systemd/system/retrophone-web.service`
 ```bash
 sudo tee /etc/systemd/system/retrophone-web.service >/dev/null <<'EOF'
 [Unit]
@@ -437,16 +446,13 @@ Edit `/etc/systemd/system/baresip.service`:
 sudo tee /etc/systemd/system/baresip.service >/dev/null <<'EOF'
 [Unit]
 Description=baresip SIP client
-After=network-online.target
-Wants=network-online.target
+After=network.target sound.target
 
 [Service]
-Type=simple
 ExecStart=/usr/bin/baresip -f /etc/retrophone/baresip
-Restart=always
-RestartSec=2
-# Root ist ok für GPIO-Setup und einfachen Start; alternativ eigenen User anlegen.
-User=root
+Restart=on-failure
+User=pi
+NoNewPrivileges=false
 
 [Install]
 WantedBy=multi-user.target
@@ -472,7 +478,7 @@ Accessible at `http://<raspberrypi-ip>:8080`
 
 The shared configuration is stored in `/etc/retrophone/config.json`. Changes made in the Web UI are persistent; services that require the new values are restarted in a controlled manner.
 
-Credentials set via `retrophone-web.service` environment variables.
+Credentials are set via the `RETRO_WEB_USER` and `RETRO_WEB_PASS` environment variables in `retrophone-web.service`. The installer initially uses `admin` / `secret`; change these values before exposing the Web UI to an untrusted network.
 
 <p align="center">
   <a href="media/webapp_login.png" target="_blank">
@@ -554,7 +560,10 @@ Edit `/etc/rc.local` and add before `exit 0`:
 iw dev wlan0 set power_save off
 ```
 
-### 4️⃣ Driver tuning for brcmfmac
+### 4️⃣ Optional driver tuning for brcmfmac
+
+Only use these options if disabling power saving is not sufficient. Test them carefully because availability and behaviour depend on the installed kernel and firmware:
+
 ```bash
 sudo rmmod brcmfmac
 sudo modprobe brcmfmac roamoff=1 feature_disable=0x82000
@@ -571,7 +580,7 @@ iw wlan0 get power_save
 # Expected → Power save: off
 ```
 
-✅ This completely stabilizes Wi-Fi connections for 24/7 operation — essential for baresip, the phone daemon and the web UI.
+Disabling power saving resolved the observed idle disconnects on the reference installation. WLAN behaviour can still depend on the access point, driver and firmware, so verify the connection over an extended period.
 
 ---
 
