@@ -544,17 +544,19 @@ Generate the encrypted PSK with `wpa_passphrase`. The password is entered invisi
 read -rsp "WLAN password: " RETROPHONE_WIFI_PASSWORD; echo
 wpa_passphrase "YOUR_SSID" "$RETROPHONE_WIFI_PASSWORD" \
   | sed '/^[[:space:]]*#psk=/d' \
-  | sudo tee /etc/wpa_supplicant/wpa_supplicant-wlan0.conf >/dev/null
+  | sudo tee /etc/wpa_supplicant/wpa_supplicant.conf >/dev/null
 unset RETROPHONE_WIFI_PASSWORD
 
 sudo sed -i '1i ctrl_interface=DIR=/run/wpa_supplicant GROUP=netdev\nupdate_config=1\ncountry=CH\n' \
-  /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
+  /etc/wpa_supplicant/wpa_supplicant.conf
 sudo sed -i '/^[[:space:]]*network={[[:space:]]*$/a\    scan_ssid=1' \
+  /etc/wpa_supplicant/wpa_supplicant.conf
+sudo chmod 600 /etc/wpa_supplicant/wpa_supplicant.conf
+sudo ln -sfn /etc/wpa_supplicant/wpa_supplicant.conf \
   /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
-sudo chmod 600 /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
 ```
 
-Replace `YOUR_SSID` with the actual WLAN name. `scan_ssid=1` is required for the hidden WLAN used by the reference installation. Only the generated `network={...}` block is necessary when the Pi should not connect to any other WLAN.
+Replace `YOUR_SSID` with the actual WLAN name. The instance service `wpa_supplicant@wlan0` expects the interface-specific filename, so `wpa_supplicant-wlan0.conf` links to the central `wpa_supplicant.conf`. `scan_ssid=1` is required for the hidden WLAN used by the reference installation. Only the generated `network={...}` block is necessary when the Pi should not connect to any other WLAN.
 
 Configure DHCP through `/etc/systemd/network/20-wlan0.network`:
 
