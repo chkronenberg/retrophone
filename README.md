@@ -579,9 +579,12 @@ sudo systemctl enable systemd-resolved.service
 sudo systemctl enable wpa_supplicant@wlan0.service
 sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 sudo apt-get purge -y network-manager
+sudo apt-get purge -y netplan.io cloud-init
 sudo apt-get autoremove -y
 sudo reboot
 ```
+
+On the reference Raspberry Pi, APT also removed the dependent packages `rpi-usb-gadget`, `raspberrypi-net-mods`, and `rpi-cloud-init-mods`. Review APT's removal list before confirming because dependency packages can differ between Raspberry Pi OS releases and installations.
 
 After reconnecting, verify the migration:
 
