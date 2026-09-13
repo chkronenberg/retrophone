@@ -525,12 +525,81 @@ The technical phone and ring logs are intentionally stored below `/run/retrophon
 The **Raspberry Pi Zero 2 W** uses the **Broadcom brcmfmac** Wi-Fi driver, which by default enables **power-saving**.  
 During idle phases this can cause 🔻 lost SIP registrations, dropped Flask sessions, or temporary SSH timeouts.
 
-### 1️⃣ Temporarily disable Power Save
+The reference installation no longer uses NetworkManager. WLAN authentication is handled by **wpa_supplicant**, while addresses, routes and DNS are handled by **systemd-networkd** and **systemd-resolved**.
+
+### 1️⃣ Replace NetworkManager with wpa_supplicant
+
+> **Important:** Removing or stopping NetworkManager interrupts the current WLAN and SSH connection. Perform this migration from a local console or prepare all configuration files and enabled services before removing NetworkManager. Keep a backup of the previous network configuration.
+
+Install the required components:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y wpasupplicant iw systemd-resolved
+```
+
+Create `/etc/wpa_supplicant/wpa_supplicant-wlan0.conf` and replace the placeholders with the real WLAN values:
+
+```bash
+sudo tee /etc/wpa_supplicant/wpa_supplicant-wlan0.conf >/dev/null <<'EOF'
+ctrl_interface=DIR=/run/wpa_supplicant GROUP=netdev
+update_config=1
+country=CH
+
+network={
+    ssid="YOUR_SSID"
+    psk="YOUR_WLAN_PASSWORD"
+    key_mgmt=WPA-PSK
+    scan_ssid=1
+}
+EOF
+sudo chmod 600 /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
+```
+
+`scan_ssid=1` is required for the hidden WLAN used by the reference installation. Only this one `network={...}` block is necessary when the Pi should not connect to any other WLAN.
+
+Configure DHCP through `/etc/systemd/network/20-wlan0.network`:
+
+```bash
+sudo mkdir -p /etc/systemd/network
+sudo tee /etc/systemd/network/20-wlan0.network >/dev/null <<'EOF'
+[Match]
+Name=wlan0
+
+[Network]
+DHCP=yes
+EOF
+```
+
+Enable the replacement services before removing NetworkManager, then reboot:
+
+```bash
+sudo systemctl enable systemd-networkd.service
+sudo systemctl enable systemd-resolved.service
+sudo systemctl enable wpa_supplicant@wlan0.service
+sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+sudo apt-get purge -y network-manager
+sudo apt-get autoremove -y
+sudo reboot
+```
+
+After reconnecting, verify the migration:
+
+```bash
+systemctl is-active systemd-networkd.service
+systemctl is-active systemd-resolved.service
+systemctl is-active wpa_supplicant@wlan0.service
+networkctl status wlan0
+```
+
+All three services should report `active`, and `networkctl` should show `wlan0` as `routable`. The reference Pi currently receives its address by DHCP; a fixed address can instead be reserved for its MAC address on the router.
+
+### 2️⃣ Temporarily disable Power Save
 ```bash
 sudo iw dev wlan0 set power_save off
 ```
 
-### 2️⃣ Make it permanent with systemd-networkd / wpa_supplicant
+### 3️⃣ Disable Power Save permanently
 
 Create a small systemd service so power saving is disabled after the WLAN interface is available:
 
@@ -554,13 +623,13 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now wlan-powersave-off.service
 ```
 
-### 3️⃣ Alternative for older Raspberry Pi OS installations
+### 4️⃣ Alternative for older Raspberry Pi OS installations
 Edit `/etc/rc.local` and add before `exit 0`:
 ```bash
 iw dev wlan0 set power_save off
 ```
 
-### 4️⃣ Optional driver tuning for brcmfmac
+### 5️⃣ Optional driver tuning for brcmfmac
 
 Only use these options if disabling power saving is not sufficient. Test them carefully because availability and behaviour depend on the installed kernel and firmware:
 
@@ -569,14 +638,14 @@ sudo rmmod brcmfmac
 sudo modprobe brcmfmac roamoff=1 feature_disable=0x82000
 ```
 
-### 5️⃣ Firmware update
+### 6️⃣ Firmware update
 ```bash
 sudo apt install --reinstall firmware-brcm80211 -y
 ```
 
-### 6️⃣ Verify
+### 7️⃣ Verify Power Save
 ```bash
-iw wlan0 get power_save
+iw dev wlan0 get power_save
 # Expected → Power save: off
 ```
 
