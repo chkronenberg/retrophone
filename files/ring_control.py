@@ -1,20 +1,34 @@
 #!/usr/bin/env python3
-import os, sys, time, signal, logging, logging.handlers
+import os, sys, time, signal, json, logging, logging.handlers
 
 import RPi.GPIO as GPIO
 
+CONFIG_PATH = os.environ.get("RETRO_CONFIG_PATH", "/etc/retrophone/config.json")
+try:
+    with open(CONFIG_PATH, "r", encoding="utf-8") as config_file:
+        CONFIG = json.load(config_file)
+    if not isinstance(CONFIG, dict):
+        CONFIG = {}
+except (FileNotFoundError, PermissionError, OSError, ValueError, TypeError):
+    CONFIG = {}
+
+GPIO_CONFIG = CONFIG.get("gpio", {}) if isinstance(CONFIG.get("gpio", {}), dict) else {}
+RING_CONFIG = CONFIG.get("ring", {}) if isinstance(CONFIG.get("ring", {}), dict) else {}
+PATH_CONFIG = CONFIG.get("paths", {}) if isinstance(CONFIG.get("paths", {}), dict) else {}
+
 # === Pins ===
-RING_A_PIN = 17    # Spule A
-RING_B_PIN = 27    # Spule B (bei SINGLE_COIL nicht genutzt)
+RING_A_PIN = int(GPIO_CONFIG.get("ring_a", 17))
+RING_B_PIN = int(GPIO_CONFIG.get("ring_b", 27))
 
 # Wenn du nur 1 Spule hast, auf True setzen
-SINGLE_COIL = False
+SINGLE_COIL = bool(RING_CONFIG.get("single_coil", False))
 
 # Umschaltintervall der Spulen (Sekunden)
-TOGGLE_INTERVAL = 0.02  # ~25 Hz
+TOGGLE_INTERVAL = float(RING_CONFIG.get("toggle_interval", 0.02))
 
-LOG_DIR = "/var/log/retrophone"
-PID_DIR = "/run/retrophone"
+#LOG_DIR = "/var/log/retrophone"
+LOG_DIR  = str(PATH_CONFIG.get("runtime_dir", "/run/retrophone"))
+PID_DIR = LOG_DIR
 PID_FILE = os.path.join(PID_DIR, "ring.pid")
 LOG_PATH = os.path.join(LOG_DIR, "ring.log")
 
@@ -75,8 +89,7 @@ def remove_pid():
         pass
 
 def parse_cadence():
-    # Umgebungsvariable "RINGCADENCE" im Format "on_ms,off_ms"
-    cad = os.environ.get("RINGCADENCE", "1000,3000")
+    cad = str(RING_CONFIG.get("cadence", os.environ.get("RINGCADENCE", "1000,3000")))
     try:
         on_ms, off_ms = [int(x.strip()) for x in cad.split(",")]
         on_ms = max(100, min(on_ms, 10000))

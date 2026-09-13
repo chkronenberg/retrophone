@@ -5,6 +5,7 @@
 [![Raspberry Pi Zero 2 W](https://img.shields.io/badge/Hardware-Raspberry%20Pi%20Zero%202%20W-red.svg)](https://www.raspberrypi.com/)
 [![Flask](https://img.shields.io/badge/Flask-Web%20UI-green.svg)](https://flask.palletsprojects.com/)
 [![License MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Release v2.0](https://img.shields.io/badge/release-v2.0-brightgreen.svg)](CHANGELOG.md)
 
 If you enjoyed this project or found it helpful in setting up your own retro phone, you can buy me a coffee to help keep the bells ringing and the code flowing. ☕👇  
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/ckronenbere)
@@ -52,6 +53,9 @@ Built on **Raspberry Pi Zero 2 W** running **Debian Trixie**, **Baresip**, and *
 | ✅ Web UI | Manage SIP, logs & restart services |
 | ✅ GPIO monitoring | Check hook / dial / return contacts |
 | ✅ Systemd services | Autostart & self-recovery |
+| ✅ Persistent call history | Last 20 calls retained across reboots |
+| ✅ Central JSON configuration | SIP, GPIO, audio, logging and timing settings |
+| ✅ Backup from Web UI | Progress display and disaster-recovery archive |
 
 ---
 

@@ -2,37 +2,65 @@
 import time, os, socket, json, logging, logging.handlers, subprocess
 import RPi.GPIO as GPIO
 
+CONFIG_PATH = os.environ.get("RETRO_CONFIG_PATH", "/etc/retrophone/config.json")
+
+def load_config():
+    try:
+        with open(CONFIG_PATH, "r", encoding="utf-8") as config_file:
+            data = json.load(config_file)
+        return data if isinstance(data, dict) else {}
+    except (FileNotFoundError, PermissionError, OSError, ValueError, TypeError):
+        return {}
+
+CONFIG = load_config()
+GPIO_CONFIG = CONFIG.get("gpio", {}) if isinstance(CONFIG.get("gpio", {}), dict) else {}
+PHONE_CONFIG = CONFIG.get("phone_daemon", {}) if isinstance(CONFIG.get("phone_daemon", {}), dict) else {}
+BARESIP_CONFIG = CONFIG.get("baresip_control", {}) if isinstance(CONFIG.get("baresip_control", {}), dict) else {}
+PATH_CONFIG = CONFIG.get("paths", {}) if isinstance(CONFIG.get("paths", {}), dict) else {}
+
 # --- GPIO Definitionen ---
-PIN_PULSE = 23        # Waehlimpulse (1 = Impuls aktiv, 0 = Ruhe)
-PIN_HOOK  = 18        # Hoerer Schalter (0 = abgehoben, 1 = aufgelegt)
-PIN_POS1  = 24        # Ruecklaufkontakt (0 = Scheibe dreht, 1 = ruht)
+PIN_PULSE = int(GPIO_CONFIG.get("pulse", 23))
+PIN_HOOK  = int(GPIO_CONFIG.get("hook", 18))
+PIN_POS1  = int(GPIO_CONFIG.get("dial_position", 24))
 
 # --- Zeiten und Parameter ---
-DIAL_TIMEOUT      = 4.0
-DEBOUNCE          = 0.006
-MIN_PULSE_LOW     = 0.004
-MAX_PULSE_LOW     = 0.08
+DIAL_TIMEOUT      = float(PHONE_CONFIG.get("dial_timeout", 2.5))
+DEBOUNCE          = float(PHONE_CONFIG.get("debounce", 0.006))
+MIN_PULSE_LOW     = float(PHONE_CONFIG.get("min_pulse", 0.004))
+MAX_PULSE_LOW     = float(PHONE_CONFIG.get("max_pulse", 0.08))
 
-CALLS_POLL_SEC    = 0.6
-RING_WATCHDOG_SEC = 2.0
+CALLS_POLL_SEC    = float(PHONE_CONFIG.get("calls_poll_interval", 0.6))
+RING_WATCHDOG_SEC = float(PHONE_CONFIG.get("ring_watchdog", 2.0))
 
 # --- baresip Steuerung (ctrl_tcp, JSON + Netstring) ---
-BS_HOST            = "127.0.0.1"
-BS_PORT            = 4444
-BS_READ_TIMEOUT    = 0.8
-BS_CONNECT_TIMEOUT = 1.0
-BS_RECONNECT_PAUSE = 0.8
+BS_HOST            = str(BARESIP_CONFIG.get("host", "127.0.0.1"))
+BS_PORT            = int(BARESIP_CONFIG.get("port", 4444))
+BS_READ_TIMEOUT    = float(BARESIP_CONFIG.get("read_timeout", 0.8))
+BS_CONNECT_TIMEOUT = float(BARESIP_CONFIG.get("connect_timeout", 1.0))
+BS_RECONNECT_PAUSE = float(BARESIP_CONFIG.get("reconnect_pause", 0.8))
 
 # --- Dialtone Datei ---
-DIALTONE_WAV = "/usr/local/retrophone/dialtone.wav"
+DIALTONE_WAV = str(PATH_CONFIG.get("dialtone", "/usr/local/retrophone/dialtone.wav"))
 
 # --- Logging ---
-LOG_DIR  = "/var/log/retrophone"
+VALID_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR"}
+
+def configured_log_level():
+    """Log-Level aus der gemeinsamen RetroPhone-Konfiguration lesen."""
+    try:
+        level = str(PHONE_CONFIG.get("log_level", "INFO")).upper()
+        return level if level in VALID_LOG_LEVELS else "INFO"
+    except (FileNotFoundError, PermissionError, OSError, ValueError, TypeError):
+        return "INFO"
+
+#LOG_DIR  = "/var/log/retrophone"
+LOG_DIR  = str(PATH_CONFIG.get("runtime_dir", "/run/retrophone"))
 LOG_PATH = os.path.join(LOG_DIR, "phone.log")
 os.makedirs(LOG_DIR, exist_ok=True)
 
 logger = logging.getLogger("retrophone")
-logger.setLevel(logging.INFO)
+LOG_LEVEL = configured_log_level()
+logger.setLevel(getattr(logging, LOG_LEVEL))
 handler = logging.handlers.TimedRotatingFileHandler(
     LOG_PATH, when="midnight", backupCount=7, encoding="utf-8"
 )
@@ -124,7 +152,7 @@ class BaresipCtrl:
             except Exception:
                 return ""
             resp = data.decode("utf-8", "ignore")
-            logger.info("baresip resp (%s): %s", command, resp.strip().replace("\n", " | "))
+            logger.debug("baresip resp (%s): %s", command, resp.strip().replace("\n", " | "))
             return resp
         except Exception as e:
             logger.error("baresip cmd fehlgeschlagen (%s): %s", command, e)
@@ -250,8 +278,8 @@ def main():
     ended_flag    = False
 
     logger.info(
-        "RetroPhone Daemon gestartet, Initial GPIO Status: HOOK=%d PULSE=%d POS1=%d",
-        last_hook_raw, last_pulse_state, last_pos1_state
+        "RetroPhone Daemon gestartet (Log-Level %s), Initial GPIO Status: HOOK=%d PULSE=%d POS1=%d",
+        LOG_LEVEL, last_hook_raw, last_pulse_state, last_pos1_state
     )
 
     try:

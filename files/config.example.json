@@ -1,0 +1,56 @@
+{
+  "phone_daemon": {
+    "log_level": "INFO",
+    "dial_timeout": 2.5,
+    "debounce": 0.006,
+    "min_pulse": 0.004,
+    "max_pulse": 0.08,
+    "calls_poll_interval": 0.6,
+    "ring_watchdog": 2.0
+  },
+  "gpio": {
+    "pulse": 23,
+    "hook": 18,
+    "dial_position": 24,
+    "ring_a": 17,
+    "ring_b": 27
+  },
+  "ring": {
+    "single_coil": false,
+    "toggle_interval": 0.02,
+    "cadence": "1000,3000"
+  },
+  "audio": {
+    "card": "H340",
+    "playback_control": "PCM",
+    "capture_control": "Mic",
+    "handset_volume": 100,
+    "microphone_volume": 100
+  },
+  "baresip_control": {
+    "host": "127.0.0.1",
+    "port": 4444,
+    "read_timeout": 0.8,
+    "connect_timeout": 1.0,
+    "reconnect_pause": 0.8
+  },
+  "sip": {
+    "display": "",
+    "user": "",
+    "domain": "sip.netvoip.ch",
+    "transport": "udp",
+    "auth_user": "",
+    "auth_pass": "",
+    "outbound": "sip:sip.netvoip.ch;transport=udp",
+    "registration_interval": 3600
+  },
+  "paths": {
+    "runtime_dir": "/run/retrophone",
+    "call_log": "/var/log/retrophone/calls.jsonl",
+    "favicon": "/usr/local/retrophone/favicon.ico",
+    "dialtone": "/usr/local/retrophone/dialtone.wav",
+    "backup_script": "/usr/local/retrophone/backup_retrophone.sh",
+    "backup_dir": "/home/pi/retrophone-backups",
+    "baresip_accounts": "/etc/retrophone/baresip/accounts"
+  }
+}
